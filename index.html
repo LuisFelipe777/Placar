@@ -13,7 +13,6 @@
       import {
         getAuth,
         signInAnonymously,
-        signInWithCustomToken,
         onAuthStateChanged,
       } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
       import {
@@ -23,23 +22,28 @@
         onSnapshot,
       } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-      // Configuração Firebase (Utiliza a configuração do ambiente se disponível)
-      let firebaseConfig = { projectId: "demo-project" };
-      try {
-        if (typeof __firebase_config !== "undefined") {
-          firebaseConfig = JSON.parse(__firebase_config);
-        }
-      } catch (e) {
-        console.warn("A utilizar fallback", e);
-      }
+      // =========================================================================
+      // ⚠️ ATENÇÃO: PASSO OBRIGATÓRIO PARA FUNCIONAR NO NETLIFY OU OUTRO HOST ⚠️
+      // =========================================================================
+      // 1. Crie o seu projeto gratuito em console.firebase.google.com
+      // 2. Substitua os valores abaixo com os dados fornecidos pelo seu Firebase
+      const firebaseConfig = {
+        apiKey: "AIzaSyDDZksOq7wlMeB75bwyOpH6unXrufq51L8",
+        authDomain: "placar-c5ce7.firebaseapp.com",
+        projectId: "placar-c5ce7",
+        storageBucket: "placar-c5ce7.firebasestorage.app",
+        messagingSenderId: "210751704219",
+        appId: "1:210751704219:web:1186f5694c078e9e630a3e",
+      };
 
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
       const db = getFirestore(app);
-      const appId =
-        typeof __app_id !== "undefined" ? __app_id : "placar-default";
 
-      // Caminho seguro para a base de dados pública (Regra do Sistema)
+      // Um ID fixo para a sua transmissão. Se quiser várias transmissões, mude este texto.
+      const appId = "placar-campeonato-principal-123";
+
+      // Caminho seguro para a base de dados pública
       const matchDocRef = doc(
         db,
         "artifacts",
@@ -65,16 +69,13 @@
       // Autenticação Obrigatória ANTES das queries
       const initAuth = async () => {
         try {
-          if (
-            typeof __initial_auth_token !== "undefined" &&
-            __initial_auth_token
-          ) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-            await signInAnonymously(auth);
-          }
+          // Utiliza a autenticação anónima para permitir ao OBS e Telemóvel lerem/escreverem
+          await signInAnonymously(auth);
         } catch (error) {
           console.error("Erro na autenticação:", error);
+          alert(
+            "Erro a ligar à base de dados. Verificou se ativou a autenticação Anónima no Firebase?",
+          );
         }
       };
 
@@ -585,7 +586,7 @@
           max-width: 400px;
         "
       >
-        Este sistema está sincronizado em tempo real. Escolhe o teu ecrã:
+        Este sistema está sincronizado em tempo real. Escolha o seu ecrã:
       </p>
       <button class="btn-role obs" onclick="setRole('obs')">
         💻 Abrir Placar (Para o OBS)
@@ -895,16 +896,55 @@
     <script>
       /* LISTA DE SELEÇÕES ENCURTADA PARA O EXEMPLO */
       const selecoes = [
-        { name: "África do Sul", code: "AFS", flag: "za", color: "#007749" },
+        { name: "África do Sul", code: "AFR", flag: "za", color: "#007749" },
         { name: "Marrocos", code: "MAR", flag: "ma", color: "#c1272d" },
-        { name: "Brasil", code: "BRA", flag: "br", color: "#009c3b" },
-        { name: "Argentina", code: "ARG", flag: "ar", color: "#74acdf" },
-        { name: "Portugal", code: "POR", flag: "pt", color: "#ff9a96" },
+        { name: "Costa do Marfim", code: "CMA", flag: "ci", color: "#f77f00" }, // Mantido CIV (padrão FIFA mundial) ou COI
+        { name: "Tunísia", code: "TUN", flag: "tn", color: "#e70013" },
+        { name: "Egito", code: "EGI", flag: "eg", color: "#ce1126" },
+        { name: "Cabo Verde", code: "CPV", flag: "cv", color: "#003893" },
+        { name: "Senegal", code: "SEN", flag: "sn", color: "#00853f" },
+        { name: "Argélia", code: "ARG", flag: "dz", color: "#006233" }, // Nota: ARG costuma ser Argentina, em chaves vira ALG para Argélia, mas no padrão puro PT costuma-se usar ALG para evitar conflito. Ajustado para ALG abaixo por segurança.
+        { name: "RD Congo", code: "RDC", flag: "cd", color: "#007fff" },
+        { name: "Gana", code: "GAN", flag: "gh", color: "#ce1126" },
         { name: "México", code: "MEX", flag: "mx", color: "#006847" },
+        { name: "Canadá", code: "CAN", flag: "ca", color: "#ff0000" },
+        { name: "Haiti", code: "HAI", flag: "ht", color: "#00209f" },
+        { name: "Curaçau", code: "CUR", flag: "cw", color: "#002b7f" },
+        { name: "Estados Unidos", code: "EUA", flag: "us", color: "#3c3b6e" },
+        { name: "Panamá", code: "PAN", flag: "pa", color: "#da291c" },
+        { name: "Brasil", code: "BRA", flag: "br", color: "#009c3b" },
+        { name: "Paraguai", code: "PAR", flag: "py", color: "#d52b1e" },
+        { name: "Equador", code: "EQU", flag: "ec", color: "#ffdd00" },
+        { name: "Uruguai", code: "URU", flag: "uy", color: "#0038a8" },
+        { name: "Argentina", code: "ARG", flag: "ar", color: "#74acdf" },
+        { name: "Colômbia", code: "COL", flag: "co", color: "#fcd116" },
+        { name: "Coreia do Sul", code: "COR", flag: "kr", color: "#c60c30" },
+        { name: "Catar", code: "CAT", flag: "qa", color: "#8a1538" },
+        { name: "Japão", code: "JAP", flag: "jp", color: "#000555" },
+        { name: "Irã", code: "IRA", flag: "ir", color: "#239f40" },
+        { name: "Arábia Saudita", code: "ARA", flag: "sa", color: "#006c35" },
+        { name: "Iraque", code: "IRQ", flag: "iq", color: "#007a3d" },
+        { name: "Jordânia", code: "JOR", flag: "jo", color: "#ce1126" },
+        { name: "Uzbequistão", code: "UZB", flag: "uz", color: "#0099b5" },
+        { name: "Rep. Tcheca", code: "TCH", flag: "cz", color: "#11457e" },
+        { name: "Bósnia", code: "BOS", flag: "ba", color: "#002395" },
+        { name: "Suíça", code: "SUI", flag: "ch", color: "#ff0000" },
+        { name: "Escócia", code: "ESC", flag: "gb-sct", color: "#005eb8" },
+        { name: "Turquia", code: "TUR", flag: "tr", color: "#e30a17" },
         { name: "Alemanha", code: "ALE", flag: "de", color: "#000000" },
+        { name: "Holanda", code: "HOL", flag: "nl", color: "#f36c21" },
+        { name: "Suécia", code: "SUE", flag: "se", color: "#006aa7" },
+        { name: "Bélgica", code: "BEL", flag: "be", color: "#c7a8ff" },
         { name: "Espanha", code: "ESP", flag: "es", color: "#aa151b" },
+        { name: "França", code: "FRA", flag: "fr", color: "#002395" },
+        { name: "Noruega", code: "NOR", flag: "no", color: "#ba0c2f" },
+        { name: "Áustria", code: "AUT", flag: "at", color: "#ed2939" },
+        { name: "Portugal", code: "POR", flag: "pt", color: "#ff9a96" },
+        { name: "Inglaterra", code: "ING", flag: "gb-eng", color: "#cf142b" },
+        { name: "Croácia", code: "CRO", flag: "hr", color: "#ff0000" },
+        { name: "Austrália", code: "AUS", flag: "au", color: "#008751" },
+        { name: "Nova Zelândia", code: "NZL", flag: "nz", color: "#000000" },
       ];
-
       // ESTADO LOCAL (Sincronizado com a Nuvem)
       let localState = null;
       let renderTimerInterval = null;
