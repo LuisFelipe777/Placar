@@ -4,10 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Placar - Transmissão Ao Vivo</title>
-    <!-- BIBLIOTECA PARA CORRIGIR O BUG DE COR NO OBS -->
+
     <script src="https://unpkg.com/vanilla-picker@2.12.3/dist/vanilla-picker.min.js"></script>
 
-    <!-- FIREBASE SDKS -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
       import {
@@ -22,11 +21,6 @@
         onSnapshot,
       } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-      // =========================================================================
-      // ⚠️ ATENÇÃO: PASSO OBRIGATÓRIO PARA FUNCIONAR NO NETLIFY OU OUTRO HOST ⚠️
-      // =========================================================================
-      // 1. Crie o seu projeto gratuito em console.firebase.google.com
-      // 2. Substitua os valores abaixo com os dados fornecidos pelo seu Firebase
       const firebaseConfig = {
         apiKey: "AIzaSyDDZksOq7wlMeB75bwyOpH6unXrufq51L8",
         authDomain: "placar-c5ce7.firebaseapp.com",
@@ -40,10 +34,8 @@
       const auth = getAuth(app);
       const db = getFirestore(app);
 
-      // Um ID fixo para a sua transmissão. Se quiser várias transmissões, mude este texto.
       const appId = "placar-campeonato-principal-123";
 
-      // Caminho seguro para a base de dados pública
       const matchDocRef = doc(
         db,
         "artifacts",
@@ -54,7 +46,6 @@
         "currentMatch",
       );
 
-      // Expõe as funções para o escopo global para o HTML poder usar
       window.dbControls = {
         updateState: async (partialState) => {
           if (!window.currentUser) return;
@@ -66,10 +57,8 @@
         },
       };
 
-      // Autenticação Obrigatória ANTES das queries
       const initAuth = async () => {
         try {
-          // Utiliza a autenticação anónima para permitir ao OBS e Telemóvel lerem/escreverem
           await signInAnonymously(auth);
         } catch (error) {
           console.error("Erro na autenticação:", error);
@@ -79,20 +68,17 @@
         }
       };
 
-      // Executa a autenticação e depois escuta as alterações
       initAuth();
 
       onAuthStateChanged(auth, (user) => {
         window.currentUser = user;
         if (user) {
-          // Começa a escutar alterações em tempo real (apenas se autenticado)
           onSnapshot(
             matchDocRef,
             (docSnap) => {
               if (docSnap.exists()) {
                 window.syncToUI(docSnap.data());
               } else {
-                // Se não existir dados, cria o estado inicial
                 window.dbControls.updateState(window.getInitialState());
               }
             },
@@ -112,13 +98,11 @@
         --text-dark: #000000;
         --font-main: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 
-        /* CORES FIXAS DA TRANSMISSÃO */
         --border-salmon: #ff9a96;
         --border-red: #e3001b;
         --border-green: #a8e63a;
         --border-purple: #c7a8ff;
 
-        /* VARIÁVEIS DINÂMICAS PARA AS BOLINHAS */
         --dot-color-1: #006847;
         --dot-color-2: #fcd116;
       }
@@ -137,7 +121,6 @@
         transition: background-color 0.3s;
       }
 
-      /* CSS DO SELETOR DE MODO */
       #role-selector {
         position: fixed;
         inset: 0;
@@ -169,7 +152,6 @@
         border: 2px solid var(--score-cyan);
       }
 
-      /* Ocultar elementos baseado na visualização */
       .hidden-obs .controls-container {
         display: none !important;
       }
@@ -184,7 +166,6 @@
         background-color: #1e2124 !important;
       }
 
-      /* --- O TEU CSS ORIGINAL ABAIXO --- */
       .scoreboard {
         display: flex;
         align-items: stretch;
@@ -380,7 +361,6 @@
         border-radius: 2px;
       }
 
-      /* ESTILOS DO PAINEL DE CONTROLO */
       .controls-container {
         background-color: #34495e;
         padding: 24px;
@@ -486,7 +466,6 @@
         padding: 10px 20px;
       }
 
-      /* MODAL */
       .modal-overlay {
         display: none;
         position: fixed;
@@ -573,7 +552,6 @@
     </style>
   </head>
   <body>
-    <!-- ECRÃ DE BOAS-VINDAS PARA SELECIONAR A FUNÇÃO -->
     <div id="role-selector">
       <h1 style="color: white; margin-bottom: 10px; text-align: center">
         Sistema de Placar na Nuvem
@@ -595,8 +573,7 @@
         📱 Abrir Controlo (Telemóvel)
       </button>
     </div>
-
-    <!-- O PLACAR VISUAL -->
+    =
     <div class="scoreboard">
       <div class="timer-column">
         <div class="timer-inner">
@@ -679,7 +656,6 @@
       </div>
     </div>
 
-    <!-- PÊNALTIS -->
     <div
       id="penalty-display"
       style="
@@ -696,7 +672,6 @@
       PEN: <span id="pen-t1">0</span> × <span id="pen-t2">0</span>
     </div>
 
-    <!-- O PAINEL DE CONTROLO -->
     <div class="controls-container">
       <h2>Painel de Controlo Remoto</h2>
 
@@ -894,17 +869,15 @@
     </div>
 
     <script>
-      /* LISTA DE SELEÇÕES ENCURTADA PARA O EXEMPLO */
       const selecoes = [
         { name: "África do Sul", code: "AFR", flag: "za", color: "#007749" },
         { name: "Marrocos", code: "MAR", flag: "ma", color: "#c1272d" },
-        { name: "Costa do Marfim", code: "CMA", flag: "ci", color: "#f77f00" }, // Mantido CIV (padrão FIFA mundial) ou COI
+        { name: "Costa do Marfim", code: "CMA", flag: "ci", color: "#f77f00" },
         { name: "Tunísia", code: "TUN", flag: "tn", color: "#e70013" },
         { name: "Egito", code: "EGI", flag: "eg", color: "#ce1126" },
         { name: "Cabo Verde", code: "CPV", flag: "cv", color: "#003893" },
         { name: "Senegal", code: "SEN", flag: "sn", color: "#00853f" },
-        { name: "Argélia", code: "ARG", flag: "dz", color: "#006233" }, // Nota: ARG costuma ser Argentina, em chaves vira ALG para Argélia, mas no padrão puro PT costuma-se usar ALG para evitar conflito. Ajustado para ALG abaixo por segurança.
-        { name: "RD Congo", code: "RDC", flag: "cd", color: "#007fff" },
+        { name: "Argélia", code: "ARG", flag: "dz", color: "#006233" },
         { name: "Gana", code: "GAN", flag: "gh", color: "#ce1126" },
         { name: "México", code: "MEX", flag: "mx", color: "#006847" },
         { name: "Canadá", code: "CAN", flag: "ca", color: "#ff0000" },
@@ -945,11 +918,10 @@
         { name: "Austrália", code: "AUS", flag: "au", color: "#008751" },
         { name: "Nova Zelândia", code: "NZL", flag: "nz", color: "#000000" },
       ];
-      // ESTADO LOCAL (Sincronizado com a Nuvem)
+
       let localState = null;
       let renderTimerInterval = null;
 
-      // DEFINE O ESTADO INICIAL SE A BASE DE DADOS ESTIVER VAZIA
       window.getInitialState = () => ({
         t1: {
           score: 0,
@@ -976,14 +948,9 @@
         },
       });
 
-      // ==========================================
-      // LÓGICA DE ROTAS (OBS vs ADMIN)
-      // ==========================================
       function setRole(role) {
         document.getElementById("role-selector").style.display = "none";
 
-        // Em vez de usar window.history.replaceState (que causa SecurityError no ambiente atual)
-        // Apenas alteramos as classes visuais da aplicação.
         applyRole(role);
       }
 
@@ -992,7 +959,6 @@
         else if (role === "admin") document.body.className = "hidden-obs";
       }
 
-      // Verifica qual ecrã deve mostrar ao carregar a página
       window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const view = urlParams.get("view");
@@ -1004,14 +970,10 @@
         ui.buildModal();
       };
 
-      // ==========================================
-      // LÓGICA DO TEMPO (Cálculo Inteligente)
-      // ==========================================
       function getElapsedSeconds() {
         if (!localState) return 0;
         let sec = localState.match.baseSeconds;
         if (localState.match.isPlaying && localState.match.lastStartTime > 0) {
-          // Calcula a diferença desde a última vez que clicou em Play
           sec += Math.floor(
             (Date.now() - localState.match.lastStartTime) / 1000,
           );
@@ -1029,7 +991,6 @@
 
         document.getElementById("timer-display").innerText = `${m}:${s}`;
 
-        // Lógica de tempo extra
         const stopMins = localState.match.stopMinutes;
         if (stopMins > 0) {
           document.getElementById("stoppage-box").style.display = "flex";
@@ -1039,13 +1000,9 @@
         }
       }
 
-      // ==========================================
-      // ATUALIZAÇÃO DA INTERFACE COM DADOS DA NUVEM
-      // ==========================================
       window.syncToUI = (data) => {
         localState = data;
 
-        // Atualiza UI Equipa 1
         document.getElementById("score-t1-display").innerText = data.t1.score;
         document.getElementById("name-t1").innerText = data.t1.code;
         document.getElementById("flag-t1").src =
@@ -1059,7 +1016,6 @@
         ui.renderReds(1, data.t1.red);
         document.getElementById("pen-t1").innerText = data.t1.pen;
 
-        // Atualiza UI Equipa 2
         document.getElementById("score-t2-display").innerText = data.t2.score;
         document.getElementById("name-t2").innerText = data.t2.code;
         document.getElementById("flag-t2").src =
@@ -1073,7 +1029,6 @@
         ui.renderReds(2, data.t2.red);
         document.getElementById("pen-t2").innerText = data.t2.pen;
 
-        // Fase do Jogo
         const phase = data.match.phase;
         document.getElementById("match-phase").innerText = phase;
         document.getElementById("match-phase").style.display =
@@ -1087,15 +1042,11 @@
           ? "⏸ Tempo Correndo..."
           : "▶ Iniciar / ⏸ Pausar";
 
-        // Inicia o loop visual do tempo
         if (!renderTimerInterval)
           renderTimerInterval = setInterval(renderTime, 1000);
-        renderTime(); // Renderiza logo ao chegar o dado
+        renderTime();
       };
 
-      // ==========================================
-      // AÇÕES DO CONTROLADOR (Envia para a Nuvem)
-      // ==========================================
       window.cloud = {
         changeScore: (team, amount) => {
           if (!localState) return;
@@ -1128,7 +1079,6 @@
           if (!localState) return;
           const match = localState.match;
           if (match.isPlaying) {
-            // Vai pausar: guarda o tempo acumulado exato e limpa o lastStartTime
             const elapsed = getElapsedSeconds();
             window.dbControls.updateState({
               match: {
@@ -1139,7 +1089,6 @@
               },
             });
           } else {
-            // Vai dar play: regista o tempo atual da internet
             window.dbControls.updateState({
               match: { ...match, isPlaying: true, lastStartTime: Date.now() },
             });
@@ -1149,7 +1098,7 @@
           if (!localState) return;
           const m = parseInt(document.getElementById("set-minutes").value) || 0;
           const s = parseInt(document.getElementById("set-seconds").value) || 0;
-          // Substitui o tempo guardado e pausa
+
           window.dbControls.updateState({
             match: {
               ...localState.match,
@@ -1172,9 +1121,6 @@
         },
       };
 
-      // ==========================================
-      // UTILITÁRIOS DE INTERFACE (Modal, Picker)
-      // ==========================================
       let targetingTeam = 1;
       window.ui = {
         renderReds: (team, amount) => {
@@ -1202,7 +1148,6 @@
             card.className = "team-card";
             card.innerHTML = `<img src="https://flagcdn.com/w40/${team.flag}.png" alt="flag"><span>${team.code}</span>`;
             card.onclick = () => {
-              // Quando escolhe no telemóvel, envia imediatamente para a nuvem
               window.dbControls.updateState({
                 [`t${targetingTeam}`]: {
                   ...localState[`t${targetingTeam}`],
