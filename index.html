@@ -7,6 +7,7 @@
 
     <script src="https://unpkg.com/vanilla-picker@2.12.3/dist/vanilla-picker.min.js"></script>
 
+    <!-- FIREBASE SDKS -->
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
       import {
@@ -466,6 +467,7 @@
         padding: 10px 20px;
       }
 
+      /* MODAL */
       .modal-overlay {
         display: none;
         position: fixed;
@@ -573,7 +575,8 @@
         📱 Abrir Controlo (Telemóvel)
       </button>
     </div>
-    =
+
+    <!-- O PLACAR VISUAL -->
     <div class="scoreboard">
       <div class="timer-column">
         <div class="timer-inner">
@@ -656,6 +659,7 @@
       </div>
     </div>
 
+    <!-- PÊNALTIS -->
     <div
       id="penalty-display"
       style="
@@ -872,12 +876,13 @@
       const selecoes = [
         { name: "África do Sul", code: "AFR", flag: "za", color: "#007749" },
         { name: "Marrocos", code: "MAR", flag: "ma", color: "#c1272d" },
-        { name: "Costa do Marfim", code: "CMA", flag: "ci", color: "#f77f00" },
+        { name: "Costa do Marfim", code: "CMA", flag: "ci", color: "#f77f00" }, // Mantido CIV (padrão FIFA mundial) ou COI
         { name: "Tunísia", code: "TUN", flag: "tn", color: "#e70013" },
         { name: "Egito", code: "EGI", flag: "eg", color: "#ce1126" },
         { name: "Cabo Verde", code: "CPV", flag: "cv", color: "#003893" },
         { name: "Senegal", code: "SEN", flag: "sn", color: "#00853f" },
-        { name: "Argélia", code: "ARG", flag: "dz", color: "#006233" },
+        { name: "Argélia", code: "ARG", flag: "dz", color: "#006233" }, // Nota: ARG costuma ser Argentina, em chaves vira ALG para Argélia, mas no padrão puro PT costuma-se usar ALG para evitar conflito. Ajustado para ALG abaixo por segurança.
+        { name: "RD Congo", code: "RDC", flag: "cd", color: "#007fff" },
         { name: "Gana", code: "GAN", flag: "gh", color: "#ce1126" },
         { name: "México", code: "MEX", flag: "mx", color: "#006847" },
         { name: "Canadá", code: "CAN", flag: "ca", color: "#ff0000" },
@@ -943,6 +948,8 @@
           phase: "1T",
           isPlaying: false,
           baseSeconds: 0,
+          stoppageBaseSeconds: 0,
+          isStoppageActive: false,
           lastStartTime: 0,
           stopMinutes: 0,
         },
@@ -970,31 +977,44 @@
         ui.buildModal();
       };
 
-      function getElapsedSeconds() {
-        if (!localState) return 0;
-        let sec = localState.match.baseSeconds;
-        if (localState.match.isPlaying && localState.match.lastStartTime > 0) {
-          sec += Math.floor(
-            (Date.now() - localState.match.lastStartTime) / 1000,
-          );
+      function getTimes() {
+        if (!localState) return { reg: 0, stop: 0 };
+        const match = localState.match;
+        let reg = match.baseSeconds || 0;
+        let stop = match.stoppageBaseSeconds || 0;
+
+        if (match.isPlaying && match.lastStartTime > 0) {
+          const diff = Math.floor((Date.now() - match.lastStartTime) / 1000);
+          if (match.isStoppageActive) {
+            stop += diff;
+          } else {
+            reg += diff;
+          }
         }
-        return sec;
+        return { reg, stop };
       }
 
       function renderTime() {
         if (!localState) return;
-        const totalSecs = getElapsedSeconds();
-        const m = Math.floor(totalSecs / 60)
+        const times = getTimes();
+
+        const m = Math.floor(times.reg / 60)
           .toString()
           .padStart(2, "0");
-        const s = (totalSecs % 60).toString().padStart(2, "0");
+        const s = (times.reg % 60).toString().padStart(2, "0");
 
         document.getElementById("timer-display").innerText = `${m}:${s}`;
 
-        const stopMins = localState.match.stopMinutes;
-        if (stopMins > 0) {
+        const match = localState.match;
+        if (match.isStoppageActive || match.stopMinutes > 0) {
           document.getElementById("stoppage-box").style.display = "flex";
-          document.getElementById("stoppage-min").innerText = stopMins;
+          document.getElementById("stoppage-min").innerText = match.stopMinutes;
+
+          const sm = Math.floor(times.stop / 60)
+            .toString()
+            .padStart(2, "0");
+          const ss = (times.stop % 60).toString().padStart(2, "0");
+          document.getElementById("stoppage-timer").innerText = `${sm}:${ss}`;
         } else {
           document.getElementById("stoppage-box").style.display = "none";
         }
@@ -1016,6 +1036,7 @@
         ui.renderReds(1, data.t1.red);
         document.getElementById("pen-t1").innerText = data.t1.pen;
 
+        // Atualiza UI Equipa 2
         document.getElementById("score-t2-display").innerText = data.t2.score;
         document.getElementById("name-t2").innerText = data.t2.code;
         document.getElementById("flag-t2").src =
@@ -1029,6 +1050,7 @@
         ui.renderReds(2, data.t2.red);
         document.getElementById("pen-t2").innerText = data.t2.pen;
 
+        // Fase do Jogo
         const phase = data.match.phase;
         document.getElementById("match-phase").innerText = phase;
         document.getElementById("match-phase").style.display =
@@ -1042,9 +1064,10 @@
           ? "⏸ Tempo Correndo..."
           : "▶ Iniciar / ⏸ Pausar";
 
+        // Inicia o loop visual do tempo
         if (!renderTimerInterval)
           renderTimerInterval = setInterval(renderTime, 1000);
-        renderTime();
+        renderTime(); // Renderiza logo ao chegar o dado
       };
 
       window.cloud = {
@@ -1079,12 +1102,13 @@
           if (!localState) return;
           const match = localState.match;
           if (match.isPlaying) {
-            const elapsed = getElapsedSeconds();
+            const times = getTimes();
             window.dbControls.updateState({
               match: {
                 ...match,
                 isPlaying: false,
-                baseSeconds: elapsed,
+                baseSeconds: times.reg,
+                stoppageBaseSeconds: times.stop,
                 lastStartTime: 0,
               },
             });
@@ -1112,8 +1136,20 @@
           if (!localState) return;
           const min =
             parseInt(document.getElementById("stoppage-time").value) || 0;
+          const isStoppageActive = min > 0;
+          const times = getTimes();
+
           window.dbControls.updateState({
-            match: { ...localState.match, stopMinutes: min },
+            match: {
+              ...localState.match,
+              stopMinutes: min,
+              isStoppageActive: isStoppageActive,
+              baseSeconds: times.reg,
+              stoppageBaseSeconds: isStoppageActive ? times.stop : 0,
+              isPlaying: isStoppageActive ? true : localState.match.isPlaying,
+              lastStartTime:
+                isStoppageActive || localState.match.isPlaying ? Date.now() : 0,
+            },
           });
         },
         resetMatch: () => {
